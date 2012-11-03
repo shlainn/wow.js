@@ -3,7 +3,8 @@ var WebSocketServer = require('ws').Server,
 
 var gameserver="localhost";
 
-var wss = new WebSocketServer({port: 8080});
+var wss = new WebSocketServer({port: 8080, host:"localhost"});
+console.log("Listening for WebSocket connections");
 
 wss.on('connection', function(ws) {
   var targetport = undefined;

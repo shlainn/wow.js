@@ -18,6 +18,7 @@ Setup
 ======
 0) clone the git, put everything in a directory on your webserver. <br>
 1) Edit node/ws2tcp.js Line 4: set gameserver to the IP or URL of the server running MaNGOS. "localhost" means ws2tcp and mangos are on the same machine<br>
+1a)Edit node/ws2tcp.js Line 6: set the "host" parameter to the to the IP or URL of the server ws2tcp is running on (same as step 2!)<br>
 2) Edit index.php Line 4: set $host to the IP or URL of the server ws2tcp is running on. "localhost" in this case means the pc in front of you.<br>
 3) Start mangos and ws2tcp<br>
 4) open your browser of choice and navigate to the location of index.php<br>
