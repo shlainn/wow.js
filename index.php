@@ -51,7 +51,7 @@ function GameClient()
   this.realm_login = function()
   {
     this.accountname = $("#input_username").val();
-    this.password = $("#input_username").val();
+    this.password = $("#input_password").val();
     this.realmsession.start_auth();
   }
   this.enter_world = function(char)
