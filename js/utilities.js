@@ -110,7 +110,8 @@ function uint64(low, high)
   this.low = low;
   this.high = high;
 
-  this.equal = function(otherU64) { return this.low == otherU64.low && this.high == otherU64.high; } 
+  this.equal = function(otherU64) { return this.low == otherU64.low && this.high == otherU64.high; }
+  this.toString = function() { lowstring = low.toString(16); highstring = high.toString(16); return "00000000".substr(0,8-highstring.length)+highstring+"00000000".substr(0,8-lowstring.length)+lowstring; }
 
 }
 
@@ -139,12 +140,12 @@ function InitSocket(address, datahandler)
       d = e.data;
       datahandler(d);
     }
-    else  
+    else
     {
       //actually this should never happen...
     }
   };
-  
+
   connection.setPort = function(port)
   {
     if(connection.readyState === connection.OPEN)
@@ -158,7 +159,7 @@ function InitSocket(address, datahandler)
       window.setTimeout(function(){connection.setPort(port);},200);
     }
   }
-  
+
   return connection;
 }
 
