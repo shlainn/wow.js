@@ -5,13 +5,15 @@ function WorldSession(game, server)
 
   this.session_key="";
   this.charlist = Array();
-  
+
   var self = this;
   var crypt_initialized = false;
   var selectedchar = -1;
-  
+
   var world_connection;
-  
+
+  var leftover_packet;
+
   //Create Empty WorldPacket
   function WorldPacket(opcode, payload_size)
   {
@@ -28,7 +30,7 @@ function WorldSession(game, server)
     world_connection = InitSocket(_server, WorldHandler);
     world_connection.setPort(port);
   }
-  
+
   this.enter_world = function(char)
   {
     if(char == undefined || char == -1)
@@ -68,7 +70,7 @@ function HandleAuthChallenge(recvPacket)
 //   console.log(sha_digest,digest_string);
   packet = new ArrayBuffer(6+4+4+_game.accountname.length+1+4+20+4);
 //         auth<<(uint32)(GetInstance()->GetConf()->clientbuild)<<unk<<acc<<clientseed_uint32;
-  packet_data = new DataView(packet);     
+  packet_data = new DataView(packet);
   packet_data.setUint16(0,4+4+4+_game.accountname.length+1+4+20+4,false);//size
   packet_data.setUint32(2,OpCodes.CMSG_AUTH_SESSION,true);//opcode
   packet_data.setUint32(6,8606,true);//clientbuild
@@ -192,7 +194,7 @@ function HandleCharEnum(recvPacket)
   }
   self.charlist = chars;
   _game.char_list();
-  
+
 
 
 //             recvPacket >> plr[i]._guid;
@@ -254,10 +256,10 @@ function HandleCharEnum(recvPacket)
 //       uint32 _petLevel;
 //       uint32 _petFamilyId;
 //       PlayerEnumItem _items[20];
-// 
+//
 //   private:
-// 
-//       
+//
+//
 //   };
 
 
@@ -306,10 +308,10 @@ function decrypt(encrypted)
 //         ++_recv_i;
 //         _recv_j = data[t];
 //         data[t] = x;
-// 
-// 
+//
+//
 //     }
-  
+
 }
 function encrypt(clear)
 {
@@ -335,26 +337,58 @@ function encrypt(clear)
 
 function WorldHandler(d)
 {
+    var carryover = false;
+    if(leftover_packet != undefined && leftover_packet.byteLength)
+    {
+      temp_d = new Uint8Array(leftover_packet.byteLength + d.byteLength);
+      temp_d.set(new Uint8Array(leftover_packet),0);
+      temp_d.set(new Uint8Array(d),leftover_packet.byteLength);
+      d = temp_d.buffer;
+      leftover_packet = 0;
+      carryover = true;
+    }
+
     var packet_offset=0;
     while(packet_offset < d.byteLength)
     {
       packet = d.slice(packet_offset);
       header = new DataView(packet);
-      decrypt(header);
+
+      if(!carryover)//header is already decrypted
+      {
+        decrypt(header);
+      }
+      else
+      {
+        carryover = false;
+      }
+
       var packet_size=header.getUint16(0,false);
       var packet_cmd=header.getUint16(2,true);
+
+      //Debug output
       for(i in OpCodes)
         if(OpCodes[i]==packet_cmd)
-          console.log("Got World command:",i,packet_cmd.toString(16),"Leftover data length:", d.byteLength-packet_offset, "Next Packet size:",packet_size+2)
+          console.log("Got World command:",i,packet_cmd.toString(16),"Leftover data length:", packet.byteLength, "Packet size:",packet_size+2)
 
 
       if (packet_cmd > MAX_OPCODE_ID)
       {
         console.log("Invalid OPCODE!!!",packet_cmd.toString(16));
+        world_connection.close();
         return;
       }
+
+      if (packet_size+2 > packet.byteLength)
+      {
+        console.log("Incomplete packet, carrying over...");
+        leftover_packet = packet;
+        return;
+      }
+
       var server_packet = new DataView(packet.slice(0,packet_size+2));
-            switch(packet_cmd)
+
+      switch(packet_cmd)
       {
         case OpCodes.SMSG_COMPRESSED_UPDATE_OBJECT:
           HandleCompressedUpdate(server_packet);
