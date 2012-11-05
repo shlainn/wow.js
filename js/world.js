@@ -143,12 +143,22 @@ function HandleTimeSyncRequest(recvPacket)
   packet_data = new WorldPacket(OpCodes.CMSG_TIME_SYNC_RESP,4+4);
   packet_data.setUint32(6,seqnum,true);
 
-  
-  packet_data.setUint32(10,Math.floor(($.now()-_game.start_time)/1000),true);
-  
-  encrypt(packet_data);
-  world_connection.send(packet_data.buffer); 
 
+  packet_data.setUint32(10,Math.floor(($.now()-_game.start_time)/1000),true);
+
+  encrypt(packet_data);
+  world_connection.send(packet_data.buffer);
+
+}
+function HandleVerifyWorld(recvPacket)
+{
+  map = recvPacket.getUint32(4,true);
+  x = recvPacket.getFloat32(8,true);
+  y = recvPacket.getFloat32(12,true);
+  z = recvPacket.getFloat32(16,true);
+  o = recvPacket.getFloat32(20,true);
+
+  //ToDo: Give this to a Player Object in the Game Object
 }
 
 function HandleCharEnum(recvPacket)
@@ -399,6 +409,9 @@ function WorldHandler(d)
         case OpCodes.SMSG_AUTH_CHALLENGE:
           HandleAuthChallenge(server_packet);
           break;
+        case OpCodes.SMSG_LOGIN_VERIFY_WORLD:
+          HandleVerifyWorld(server_packet);
+          break;
         case OpCodes.SMSG_AUTH_RESPONSE:
           HandleAuthResponse(server_packet);
           break;
@@ -410,6 +423,10 @@ function WorldHandler(d)
           break;
         case OpCodes.SMSG_TIME_SYNC_REQ:
           HandleTimeSyncRequest(server_packet);
+          break;
+        case OpCodes.SMSG_ACCOUNT_DATA_TIMES:
+        case OpCodes.SMSG_FEATURE_SYSTEM_STATUS:
+          //Ignore certain opcodes silently
           break;
         default:
           for(i in OpCodes)
