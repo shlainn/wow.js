@@ -111,7 +111,7 @@ function HandleMOTD(recvPacket)
   {
     motdline = recvPacket.getString(offset);
     offset += motdline.length+1;
-    console.log("MOTD:",motdline);
+    console.message("MOTD: "+motdline);
   }
 //     uint32 lines;
 //     std::string line;

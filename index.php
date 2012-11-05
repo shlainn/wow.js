@@ -8,13 +8,14 @@ $port="8080";
 
 <style>
   * { margin: 0; padding: 0}
-  
-  #debugDiv {position:absolute;bottom:10px;left:10px;height:150px;width:600px;border:1px #444 solid;background-color:#eee;opacity:0.4;overflow:auto}
-  #debugDiv:hover {opacity:0.9}
-  #debugDiv p { font-size:10px;}
+
+  #msgDiv {position:absolute;bottom:10px;left:10px;height:150px;width:600px;border:1px #444 solid;background-color:#eee;opacity:0.4;overflow:auto}
+  #debugDiv {position:absolute;bottom:10px;right:10px;height:150px;width:600px;border:1px #444 solid;background-color:#eee;opacity:0.4;overflow:auto}
+  #debugDiv:hover, #msgDiv:hover {opacity:0.9}
+  #debugDiv p, #msgDiv p { font-size:10px;}
   #list_div, #realm_login{position:absolute;top:50%;left:50%;height:200px;width:400px;border:2px #444 solid;background-color:#eee;margin-left:-200px;margin-top:-200px;padding:20px}
   #realm_login input{margin:10px;}
-  
+
 </style>
 
 <script type=text/javascript src=js/jquery-1.8.2.min.js></script>
@@ -108,18 +109,25 @@ var client;
 
 $(document).ready(function() {
   // comment this to disable logging to the onscreen div. it is only a temporary thing anyway
-  if (typeof console  != undefined) 
+
+  if (typeof console  != undefined)
     if (typeof console.log != undefined)
         console.olog = console.log;
     else
         console.olog = function() {};
 
-  console.log = function(message) 
+  console.log = function(message)
   {
       console.olog(arguments);
       for(var i = 1; i < arguments.length; i++)
         message += " " + arguments[i];
       $('#debugDiv').prepend('<p>' + (new Date().toLocaleTimeString())+": "+message + '</p>');
+  };
+
+  console.message = function(message) //This is a hack
+  {
+      $('#msgDiv').prepend('<p>' + message + '</p>');
+      console.log("MSG: ",message);
   };
 
   client  = new GameClient();
@@ -128,7 +136,7 @@ $(document).ready(function() {
 </script>
 
 
-<div id ="list_div" style="display:none"></div> 
+<div id ="list_div" style="display:none"></div>
 <div id="realm_login">
   <h1>Welcome to the glorious WoW.js</h1>
 
@@ -137,3 +145,4 @@ $(document).ready(function() {
   <button onClick=client.realm_login()>Log In</button>
 </div>
 <div id="debugDiv"></div>
+<div id="msgDiv"></div>
