@@ -105,15 +105,13 @@ function hexreverse(hex)
 }
 
 //object to handle 64bit guids
-function uint64(low, high)
+var uint64 = function(low, high)
 {
   this.low = low;
   this.high = high;
-
-  this.equal = function(otherU64) { return this.low == otherU64.low && this.high == otherU64.high; }
-  this.toString = function() { lowstring = low.toString(16); highstring = high.toString(16); return "00000000".substr(0,8-highstring.length)+highstring+"00000000".substr(0,8-lowstring.length)+lowstring; }
-
 }
+uint64.prototype.equal =function(otherU64) { return this.low == otherU64.low && this.high == otherU64.high; }
+uint64.prototype.toString = function() { lowstring = this.low.toString(16); highstring = this.high.toString(16); return "00000000".substr(0,8-highstring.length)+highstring+"00000000".substr(0,8-lowstring.length)+lowstring; }
 
 //Generic WebSocket Initialization
 function InitSocket(address, datahandler)
