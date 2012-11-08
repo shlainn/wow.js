@@ -313,8 +313,7 @@
 
     function zip_NEEDBITS(n) {
         while(zip_bit_len < n) {
-            zip_bit_buf <<= 8;
-            zip_bit_buf |= zip_GET_BYTE();
+            zip_bit_buf |= zip_GET_BYTE()<<zip_bit_len;
             zip_bit_len += 8;
         }
     }
@@ -739,14 +738,14 @@
         zip_inflate_data = data;
         zip_inflate_pos = 0;
 
-        buff = new DataView(new ArrayBuffer(finalsize));
+        buff = new Uint8Array(finalsize);
         out = "";
         i = zip_inflate_internal(buff, 0, buff.byteLength);
         zip_inflate_data = null; // G.C.
 
-        return buff;
+        return new DataView(buff.buffer);
     };
-    
+
     JSInflate.inflate = function (data) {
         var out, buff;
         var i, j;
