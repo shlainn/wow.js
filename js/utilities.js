@@ -64,6 +64,22 @@ DataView.prototype.setUint64 = function (offset,value,littleEndian)
 
 }
 
+DataView.prototype.pguid_length = 0;
+DataView.prototype.getPackedGUID = function(offset)
+{
+  var mask = this.getUint8(offset); offset++;
+  var guid = new DataView(new ArrayBuffer(8));
+  this.pguid_length = 1;
+  for(var i = 0; i < 8; ++i)
+  {
+      if(mask & (1 << i))
+      {
+          guid.setUint8(i,this.getUint8(offset));offset++;
+          this.pguid_length++;
+      }
+  }
+  return guid.getUint64(0,true);
+}
 
 //convert a hex string to a normal string.
 function hex2str(hex)
