@@ -43,53 +43,63 @@ config.realmname = "";
 
 
 // Objects. Full inheritance tree:
+// O (capital O for Object, which is obviously taken in js)
+//  Item
+//    Container
 //  WorldObject
-//    Item
-//      Container
 //    Unit
 //      Player
 //    GameObject
 
-function WorldObject()
+function O()
 {
 }
-WorldObject.prototype.guid=0;
-WorldObject.prototype.type=0;
-WorldObject.prototype.updatefields={};
-WorldObject.prototype.movementdata={};
+O.prototype.guid=0;
+O.prototype.type=OBJECTTYPE.OBJECT;
 
 function Item(guid)
 {
   this.guid = guid;
-  this.type = OBJECTTYPEID.ITEM;
+  this.type |= OBJECTTYPE.ITEM;
 }
-Item.prototype = new WorldObject();
+Item.prototype = new O();
 
 function Container(guid)
 {
   this.guid = guid;
-  this.type = OBJECTTYPEID.CONTAINER;
+  this.type |= OBJECTTYPE.CONTAINER;
 }
 Container.prototype = new Item();
+
+function WorldObject()
+{
+}
+WorldObject.prototype = new O();
 
 function Unit(guid)
 {
   this.guid = guid;
-  this.type = OBJECTTYPEID.UNIT;
+  this.type |= OBJECTTYPE.UNIT;
+  this.position = {"x":0,"y":0,"z":0};
+  this.data={};
 }
 Unit.prototype = new WorldObject();
 
 function Player(guid)
 {
   this.guid = guid;
-  this.type = OBJECTTYPEID.PLAYER;
+  this.type |= OBJECTTYPE.PLAYER;
+  this.position = {"x":0,"y":0,"z":0};
+  this.data={};
 }
 Player.prototype = new Unit();
 
 function GameObject(guid)
 {
   this.guid = guid;
-  this.type = OBJECTTYPEID.GAMEOBJECT;
+  this.type |= OBJECTTYPE.GAMEOBJECT;
+  this.position = {"x":0,"y":0,"z":0};
+  this.data={};
 }
 GameObject.prototype = new WorldObject();
 
@@ -137,27 +147,47 @@ function GameClient()
     for(var i in units)
     {
       var u = units[i];
-      if(!u.type || u.type < OBJECTTYPEID.UNIT)
+      if(!u.type || ((u.type & OBJECTTYPE.UNIT) == 0 && (u.type & OBJECTTYPE.GAMEOBJECT) == 0))
         continue;
 
-      if(!u.movementdata)
-        continue;
-      if(u.movementdata.flags & UPDATEFLAG.LIVING)
-      {
-        l = Math.round((u.movementdata.mi.y - world_center.y + offset_left)*step);
-        t = Math.round((u.movementdata.mi.x - world_center.x + offset_top)*step);
-        symbol = u.type == OBJECTTYPEID.PLAYER?"@":"X";
-        $("#playfield").append("<div style=\"top:"+t+"px;left:"+l+"px\">"+symbol+"</div>");
-      }
-      else if(u.movementdata.flags & UPDATEFLAG.HAS_POSITION)
-      {
-        l = Math.round((u.movementdata.has_pos.y - world_center.y + offset_left)*step);
-        t = Math.round((u.movementdata.has_pos.x - world_center.x + offset_top)*step);
-        $("#playfield").append("<div style=\"top:"+t+"px;left:"+l+"px\">O</div>");
-      }
+      l = Math.round((u.position.y - world_center.y + offset_left)*step);
+      t = Math.round((u.position.x - world_center.x + offset_top)*step);
+      symbol = u.type & OBJECTTYPE.PLAYER?"@":(u.type & OBJECTTYPE.UNIT?"X":"O");
+      $("#playfield").append("<div style=\"top:"+t+"px;left:"+l+"px;\">"+symbol+"_"+i+"</div>");
+
     }
+
   }
 
+  this.applyMovementData = function(guid, movedata)
+  {
+    if(!units[guid.toString()])
+      return;
+    var x,y,z;
+    if(movedata.flags & UPDATEFLAG.LIVING)
+    {
+      x = movedata.mi.x;
+      y = movedata.mi.y;
+      z = movedata.mi.z;
+      this.SetPosition(guid,x,y,z);
+    }
+    else if(movedata.flags & UPDATEFLAG.HAS_POSITION)
+    {
+      x = movedata.has_pos.x;
+      y = movedata.has_pos.y;
+      z = movedata.has_pos.z;
+      this.SetPosition(guid,x,y,z);
+    }
+
+    units[guid.toString()].movementdata = movedata;
+  }
+
+  this.applyUpdatefields = function(guid, updatefields)
+  {
+    if(!units[guid.toString()])
+      return;
+    units[guid.toString()].updatefields = updatefields;
+  }
 
   this.AddWorldObject = function(guid, type, movedata, values)
   {
@@ -189,11 +219,28 @@ function GameClient()
         return;
       break;
     }
-    obj.movementdata = movedata;
-    obj.updatefields = values;
     units[guid.toString()]=obj;
-
+    this.applyMovementData(guid,movedata);
+    this.applyUpdatefields(guid,values);
   }
+
+  this.SetPosition = function(_guid,x,y,z)
+  {
+    console.log(_guid.toString());
+    var u = units[_guid.toString()];
+    if(!u)
+      return;
+
+    if(!u.type || ((u.type & OBJECTTYPE.UNIT) == 0 && (u.type & OBJECTTYPE.GAMEOBJECT) == 0 ))
+    {
+      console.log("SetPosition for Non-Unit Object???",u.type.toString(16));
+      return;
+    }
+    units[_guid.toString()].position.x = x;
+    units[_guid.toString()].position.y = y;
+    units[_guid.toString()].position.z = z;
+  }
+
 
   this.realm_login = function()
   {
@@ -207,7 +254,7 @@ function GameClient()
         return;
       this.worldsession.enter_world(char);
       player = new MyCharacter(this.worldsession.charlist[char].guid);
-      draw_interval = window.setInterval(function(){DrawUnits();},2000);//TEMP
+      draw_interval = window.setInterval(function(){DrawUnits();},500);//TEMP
       $("#list_div").empty();
       $("#list_div").css({"display":"none"});
   }
@@ -282,6 +329,11 @@ $(document).ready(function() {
       $('#msgDiv').prepend('<p>' + message + '</p>');
       console.log("MSG: ",message);
   };
+
+  console.detail = function(message)
+  {
+      console.olog(arguments,'background: #ddd; color: blue');
+  }
 
   client  = new GameClient();
 

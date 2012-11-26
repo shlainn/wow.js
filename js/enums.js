@@ -100,6 +100,13 @@ MOVEMENTFLAG2.UNK9              = 0x4000;
 MOVEMENTFLAG2.UNK10             = 0x8000;
 MOVEMENTFLAG2.INTERP_MASK       = MOVEMENTFLAG2.INTERP_MOVEMENT | MOVEMENTFLAG2.INTERP_TURNING | MOVEMENTFLAG2.INTERP_PITCHING;
 
+var MONSTERMOVETYPE = {};
+MONSTERMOVETYPE.Normal          = 0;
+MONSTERMOVETYPE.Stop            = 1;
+MONSTERMOVETYPE.FacingSpot      = 2;
+MONSTERMOVETYPE.FacingTarget    = 3;
+MONSTERMOVETYPE.FacingAngle     = 4;
+
 var SPLINEFLAG = {};
 SPLINEFLAG.None         = 0x00000000;
 SPLINEFLAG.Done         = 0x00000001;
@@ -135,6 +142,13 @@ SPLINEFLAG.Unknown29    = 0x20000000;
 SPLINEFLAG.Unknown30    = 0x40000000;
 SPLINEFLAG.Unknown31    = 0x80000000;
 
+// Masks
+SPLINEFLAG.Mask_Final_Facing = SPLINEFLAG.Final_Point | SPLINEFLAG.Final_Target | SPLINEFLAG.Final_Angle;
+
+// flags that shouldn't be appended into SMSG_MONSTER_MOVE\SMSG_MONSTER_MOVE_TRANSPORT packet, should be more probably
+SPLINEFLAG.Mask_No_Monster_Move = SPLINEFLAG.Mask_Final_Facing | SPLINEFLAG.Done;
+// CatmullRom interpolation mode used
+SPLINEFLAG.Mask_CatmullRom = SPLINEFLAG.Flying;
 
 /// List of OpCodes
 var OpCodes = {

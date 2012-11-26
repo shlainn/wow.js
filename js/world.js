@@ -33,6 +33,12 @@ function WorldSession(game, server)
     world_connection.setPort(port);
   }
 
+  this.close = function()
+  {
+    console.log("Closing World connection");
+    world_connection.close();
+  }
+
   this.enter_world = function(char)
   {
     if(char == undefined || char == -1)
@@ -342,7 +348,7 @@ function HandleUpdate(recvPacket, compressed)
   {
     realsize = recvPacket.getUint32(4,true);
     recvPacket = JSInflate.inflateTo(new DataView(recvPacket.buffer.slice(8+2)),realsize);
-    console.error("uncompressed",str2hex(recvPacket.getString(0,recvPacket.byteLength)),"end");
+//     console.olog("uncompressed",str2hex(recvPacket.getString(0,recvPacket.byteLength)),"end");
   }
   else
   {
@@ -420,7 +426,69 @@ function HandleVerifyWorld(recvPacket)
   //ToDo: Give this to a Player Object in the Game Object
   //ToDo2: Load stuff around these coordinates...
 }
+function HandleMonsterMove(recvPacket)
+{
+  offset=4;
+  guid = recvPacket.getPackedGUID(offset); offset += recvPacket.pguid_length;
+  x = recvPacket.getFloat32(offset,true); offset+=4;
+  y = recvPacket.getFloat32(offset,true); offset+=4;
+  z = recvPacket.getFloat32(offset,true); offset+=4;
+  time = recvPacket.getUint32(offset,true); offset+=4;
+  type = recvPacket.getUint8(offset); offset+=1;
+  _game.SetPosition(guid,x,y,z);
+  console.log("MonsterMove: GUID "+guid+" X:"+x+" Y:"+y+" Z:"+z+" time: "+time+" type:"+type);
+  switch(type)
+  {
+    case MONSTERMOVETYPE.Normal: break;// normal packet
+    case MONSTERMOVETYPE.Stop: return; // stop packet
+    case MONSTERMOVETYPE.FacingSpot:
+        //recvPacket >> unkf >> unkf >> unkf;
+        //break;
+    case MONSTERMOVETYPE.FacingTarget:
+        //uint64 unkguid;
+        //recvPacket >> unkguid;
+        //break;
+    case MONSTERMOVETYPE.FacingAngleq:
+        //float angle;
+        //recvPacket >> angle;
+    default:
+        console.log("Unhandled MovementType in MonsterMove:"+type);
+        return;
+        break;
+  }
+  flags = recvPacket.getUint32(offset,true); offset+=4;
+  duration = recvPacket.getUint32(offset,true); offset+=4;
+  console.log("Flags: 0x"+flags.toString(16)+" duration:"+duration)
+  if(flags & SPLINEFLAG.Mask_CatmullRom)
+  {
+   //Handle later
+  }
+  else//linear path
+  {
+    last_idx = recvPacket.getUint32(offset,true); offset+=4;
+    wp_x = recvPacket.getFloat32(offset,true); offset+=4;
+    wp_y = recvPacket.getFloat32(offset,true); offset+=4;
+    wp_z = recvPacket.getFloat32(offset,true); offset+=4;
+    console.log("goal",last_idx,wp_x,wp_y,wp_z)
+    if(last_idx > 1)
+    {
+      for(var i = 1;i < last_idx;++i)
+      {
+        packedxyz = recvPacket.getUint32(offset,true); offset+=4;
+        //This is probably problematic
+        wp_p_x = (packedxyz & 0x7ff)*0.25;
+        wp_p_y = ((packedxyz >> 11) & 0x7ff)*0.25;
+        wp_p_z = ((packedxyz >> 22) & 0x3ff)*0.25;
+        console.log("packed:",wp_p_x,wp_p_y,wp_p_z)
+      }
+    }
+  }
 
+
+  if(offset < recvPacket.length)
+    console.log("Leftover Data:",new Uint8Array(recvPacket.buffer.slice(offset)))
+  //ToDo: Handle the rest of the packet --> splines
+}
 function HandleCharEnum(recvPacket)
 {
   char_num = recvPacket.getUint8(4);
@@ -683,6 +751,9 @@ function WorldHandler(d)
           break;
         case OpCodes.SMSG_TIME_SYNC_REQ:
           HandleTimeSyncRequest(server_packet);
+          break;
+        case OpCodes.SMSG_MONSTER_MOVE:
+          HandleMonsterMove(server_packet);
           break;
         case OpCodes.SMSG_ACCOUNT_DATA_TIMES:
         case OpCodes.SMSG_FEATURE_SYSTEM_STATUS:
