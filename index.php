@@ -3,7 +3,6 @@
 var config = {};
 config.host="localhost";
 config.port="8080";
-config.realmname = "";
 </script>
 
 
@@ -264,6 +263,7 @@ function GameClient()
       if(realm > this.realmsession.realmlist.length)
         return;
       this.worldsession.init(this.realmsession.realmlist[realm].addr_port.split(":")[1]); //maybe make a getPort() function for a Realm object??
+      localStorage.realmname = this.realmsession.realmlist[realm].name;
       $("#list_div").hide();
   }
   this.char_list = function()
@@ -280,10 +280,20 @@ function GameClient()
         $("#list_div").append("<p>"+this.worldsession.charlist[i].name+" <a href=# onClick=client.enter_world("+i+")>enter world with this char</a></p>");
       }
     }
+    $("#list_div").append("<p><a href=# onClick=client.realm_list_back()>Back to Realm Selection</a></p>");
+
+  }
+  this.realm_list_back = function()
+  {
+    delete localStorage.realmname;
+    this.realm_list();
   }
 
   this.realm_list = function()
   {
+    if(this.worldsession)
+      this.worldsession.close();
+
     $("#realm_login").css({"display":"none"});
     $("#list_div").css({"display":"block"});
 
@@ -292,7 +302,7 @@ function GameClient()
     for(var i=0;i<this.realmsession.realmlist.length;i++)
     {
       $("#list_div").append("<p>"+this.realmsession.realmlist[i].name+" <a href=# onClick=client.world_login("+i+")>connect to this realm</a></p>");
-      if (this.realmsession.realmlist[i].name == config.realmname)
+      if (localStorage.realmname && localStorage.realmname == this.realmsession.realmlist[i].name)
       {
         this.world_login(i);
         return;

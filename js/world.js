@@ -35,7 +35,10 @@ function WorldSession(game, server)
 
   this.close = function()
   {
+    if(!world_connection)
+      return;
     console.log("Closing World connection");
+    crypt_initialized = false;
     world_connection.close();
   }
 
