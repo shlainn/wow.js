@@ -33,6 +33,7 @@ config.realmname = "";
 
 <script type=text/javascript src=js/sha.js></script>
 
+<script type=text/javascript src=js/compatibility.js ></script>
 <script type=text/javascript src=js/utilities.js ></script>
 
 <script type=text/javascript src=js/enums.js></script>
@@ -301,10 +302,6 @@ function GameClient()
 };
 
 
-
-
-
-
 var client;
 
 $(document).ready(function() {
@@ -335,7 +332,13 @@ $(document).ready(function() {
       console.olog(arguments,'background: #ddd; color: blue');
   }
 
-  client  = new GameClient();
+  if(!localStorage || !localStorage.compatibility_tested || localStorage.compatibility_version != compatibility_version)
+  {
+    TestBrowserCompatibility();
+  }
+
+  if(localStorage.compatibility_success)
+    client  = new GameClient();
 
 
 });
@@ -350,6 +353,7 @@ $(document).ready(function() {
   Username: <input id=input_username><br>
   Password: <input id=input_password type=password><br>
   <button onClick=client.realm_login()>Log In</button>
+  <button onClick=TestBrowserCompatibility()>Retest Compatibility</button>
 </div>
 <div id="debugDiv"></div>
 <div id="msgDiv"></div>
