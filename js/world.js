@@ -412,7 +412,7 @@ function HandleTimeSyncRequest(recvPacket)
   packet_data.setUint32(6,seqnum,true);
 
 
-  packet_data.setUint32(10,Math.floor(($.now()-_game.start_time)/1000),true);
+  packet_data.setUint32(10,Math.floor(($.now()-_game.tick_count)/1000),true);
 
   encrypt(packet_data);
   world_connection.send(packet_data.buffer);
