@@ -12,7 +12,7 @@ A Web Server with PHP (I use Apache)<br><br>
 Google Chrome (tested on Version 20.0.1132.47 Ubuntu 12.04 (144678)) <br>
 or Mozilla Firefox (tested on Firefox 16.0.2 for Ubuntu)<br><br>
 
-MaNGOS One (https://github.com/mangos-one/)
+apple two (https://github.com/mangos-one/)
 
 Setup
 ======
